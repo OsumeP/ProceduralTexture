@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PLEASE NO CHANGES BELOW THIS LINE (UNTIL I SAY SO) -->
+  <script language="javascript" type="text/javascript" src="libraries/p5.min.js"></script>
+  <script language="javascript" type="text/javascript" src="Function.js"></script>
+  <script language="javascript" type="text/javascript" src="ProceduralTexture.js"></script>
+  <!-- OK, YOU CAN MAKE CHANGES BELOW THIS LINE AGAIN -->
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      /* DEGRADADO NUEVO: Tonos extraídos directamente de tu imagen verde-morada */
+      background: linear-gradient(180deg, #51af33 0%, #3e1b5d 100%);
+      min-height: 100vh;
+    }
+
+    /* Contenedor principal de tres columnas */
+    .app-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+      padding: 30px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+
+    /* Paneles laterales estilizados con desenfoque de fondo */
+    .control-panel {
+      width: 280px;
+      /* amarillo claro*/
+      background:  #F2EAB3;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(230, 126, 34, 0.3); /* Borde con toque cálido */
+      border-radius: 16px;
+      padding: 24px;
+      color: #000000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    /* Títulos 
+    .control-panel h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border-bottom: 1px solid rgba(230, 126, 34, 0.3);
+      padding-bottom: 10px;
+      /*verde oscuro*/
+      color: #03441E; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control-group {
+      margin-bottom: 18px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color:  #03441E; 
+    }
+
+    /* Valores numéricos cálidos */
+    .control-group label span {
+      float: right;
+      font-weight: bold;
+      color:  #03441E; 
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      margin: 0;
+      cursor: pointer;
+      accent-color: #459DE6; /* Hace que el deslizador sea del color cálido */
+    }
+
+    /* Contenedor del lienzo p5.js en el centro */
+    #canvas-container {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      background-color: transparent; /* Cambia #000 por transparent */
+      /*background-color: #000000;*/
+      line-height: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    
+    <!-- COLUMNA IZQUIERDA: PARÁMETROS DE TEXTURA -->
+    <div class="control-panel">
+      <h3>Textura (Turing)</h3>
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">1. Tipos de Texturas</legend>
+        
+        <div class="control-group">
+          <label>Tasa Feed (Alimentación): <span id="feed-val">0.055</span></label>
+          <input type="range" id="feed-slider" min="0.01" max="0.09" step="0.001" value="0.055">
+        </div>
+  
+        <div class="control-group">
+          <label>Tasa Kill (Eliminación): <span id="kill-val">0.062</span></label>
+          <input type="range" id="kill-slider" min="0.01" max="0.09" step="0.001" value="0.062">
+        </div>
+  
+        <div class="control-group">
+          <label>Color del Patrón: <span id="color-patron-val">50</span></label>
+          <input type="range" id="color-patron-slider" min="0" max="255" step="1" value="50">
+        </div>
+      </fieldset>
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">Vista de Escena</legend>
+
+        <div class="control-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+          <input type="checkbox" id="textura-check" style="width: auto; cursor: pointer;">
+          <label for="textura-check" style="cursor: pointer; margin: 0;">Activar textura de Turing</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <!-- COLUMNA CENTRAL: EL LIENZO 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- COLUMNA DERECHA: ILUMINACIÓN PHONG REORGANIZADA -->
+    <div class="control-panel">
+      <h3>Iluminación Phong</h3>
+
+      <!-- GRUPO 1: UBICACIÓN DE LA LUZ -->
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">1. Ubicación de la Luz</legend>
+        
+        <div class="control-group">
+          <label>1° Altura (Eje Y): <span id="lightY-val">400</span></label>
+          <input type="range" id="lightY-slider" min="-400" max="400" step="1" value="143">
+        </div>
+
+        <div class="control-group">
+          <label>2° Lado a Lado (Eje X): <span id="lightX-val">400</span></label>
+          <input type="range" id="lightX-slider" min="-400" max="400" step="1" value="-172">
+        </div>
+
+        <div class="control-group">
+          <label>3° Distancia (Eje Z ): <span id="lightZ-val"600</span></label>
+          <input type="range" id="lightZ-slider" min="100" max="600" step="1" value="162">
+        </div>
+      </fieldset>
+
+      <!-- GRUPO 2: POTENCIA Y AMBIENTE -->
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">2. Potencia de Luces</legend>
+        
+        <div class="control-group">
+          <label>Luz Difusa (Potencia Reflector): <span id="diffuse-val">200</span></label>
+          <input type="range" id="diffuse-slider" min="0" max="255" step="1" value="140">
+        </div>
+
+        <div class="control-group">
+          <label>Luz Ambiente (Luz General): <span id="ambient-val">50</span></label>
+          <input type="range" id="ambient-slider" min="0" max="255" step="1" value="50">
+        </div>
+      </fieldset>
+
+      <!-- GRUPO 3: ACABADO Y DESTELLO -->
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">3. Brillo y Material</legend>
+        
+        <div class="control-group">
+          <label>Concentración del Brillo (Shininess): <span id="shininess-val">23</span></label>
+          <input type="range" id="shininess-slider" min="1" max="100" step="1" value="23">
+        </div>
+
+        <div class="control-group">
+          <label>Intensidad Destello (Luz Especular): <span id="specular-val">255</span></label>
+          <input type="range" id="specular-slider" min="0" max="255" step="1" value="255">
+        </div>
+      </fieldset>
+      <fieldset style="border: 1px solid rgba(230, 126, 34, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <legend style="font-size: 11px; color: #e67e22; padding: 0 5px; font-weight: bold; text-transform: uppercase;">4. Vista de Escena</legend>
+        
+        <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="rotacion-check" style="width: auto; cursor: pointer;">
+          <label for="rotacion-check" style="cursor: pointer; margin: 0;">Activar rotación automática</label>
+        </div>
+      </fieldset>
+      
+    </div>
+    <!-- CONTROL DE ROTACIÓN AUTOMÁTICA -->
+
+  </div>
+</body>
+</html>
